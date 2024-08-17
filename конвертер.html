@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер валют з профілем гравця</title>
+    <style>
+        /* Ваші стилі залишаються без змін */
+        /* Додані стилі для адміністраторської частини */
+        .admin-container {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            margin: 100px auto 0;
+        }
+        .admin-info {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .admin-info div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu" onclick="toggleMenu()">&#9776;</div>
+    <div class="menu-content" id="menu-content">
+        <a href="#" onclick="showConverter()">Конвертер валют</a>
+        <a href="#" onclick="showProfile()">Профіль гравця</a>
+        <a href="#" onclick="showAdminLogin()">Авторизація адміністратора</a>
+    </div>
+
+    <!-- Інші частини вашого коду залишаються без змін -->
+
+    <!-- Додано форма для авторизації адміністратора -->
+    <div class="container hidden" id="admin-login-form">
+        <h1>Авторизація адміністратора</h1>
+        <label for="admin-password">Пароль:</label>
+        <input type="password" id="admin-password" placeholder="Введіть пароль">
+        <div class="button-container">
+            <button class="button" onclick="adminLogin()">Увійти</button>
+        </div>
+    </div>
+
+    <!-- Додано форма для адміністрування -->
+    <div class="admin-container hidden" id="admin-panel">
+        <h1>Адміністрування</h1>
+        <label for="admin-player-id">ID гравця:</label>
+        <input type="text" id="admin-player-id" placeholder="Введіть ID гравця">
+        <label for="admin-change-amount">Сума для зміни:</label>
+        <input type="number" id="admin-change-amount" placeholder="Введіть суму">
+        <div class="button-container">
+            <button class="button" onclick="addUlts()">Додати ульти</button>
+            <button class="button" onclick="subtractUlts()">Відняти ульти</button>
+        </div>
+        <div class="admin-info">
+            <div id="admin-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const conversionRate = 100000000; // 100 мільйонів
+        const adminPassword = 'QAZPLM18052004'; // Пароль адміністратора
+
+        function toggleMenu() {
+            const menuContent = document.getElementById('menu-content');
+            menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function register() {
+            const firstname = document.getElementById('reg-firstname').value;
+            const lastname = document.getElementById('reg-lastname').value;
+            const activity = document.getElementById('reg-activity').value;
+            const balance = parseFloat(document.getElementById('reg-balance').value);
+
+            if (firstname && lastname && activity && !isNaN(balance)) {
+                const user = {
+                    firstname: firstname,
+                    lastname: lastname,
+                    activity: activity,
+                    balance: balance
+                };
+                localStorage.setItem('user', JSON.stringify(user));
+                alert('Реєстрація успішна! Тепер авторизуйтесь.');
+                showLoginForm();
+            } else {
+                alert('Будь ласка, заповніть всі поля.');
+            }
+        }
+
+        function login() {
+            const firstname = document.getElementById('login-firstname').value;
+            const lastname = document.getElementById('login-lastname').value;
+
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+
+            if (storedUser && firstname === storedUser.firstname && lastname === storedUser.lastname) {
+                alert('Авторизація успішна!');
+                showProfile();
+            } else {
+                alert('Невірне ім\'я або прізвище.');
+            }
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+
+            if (password === adminPassword) {
+                document.getElementById('admin-login-form').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+            } else {
+                alert('Невірний пароль.');
+            }
+        }
+
+        function showLoginForm() {
+            document.getElementById('registration-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+
+        function showProfile() {
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('currency-converter').classList.add('hidden');
+            document.getElementById('profile').classList.remove('hidden');
+            document.getElementById('profile-firstname').textContent = storedUser.firstname;
+            document.getElementById('profile-lastname').textContent = storedUser.lastname;
+            document.getElementById('profile-activity').textContent = storedUser.activity;
+            document.getElementById('profile-balance').textContent = storedUser.balance.toLocaleString();
+        }
+
+        function showConverter() {
+            document.getElementById('profile').classList.add('hidden');
+            document.getElementById('currency-converter').classList.remove('hidden');
+            document.getElementById('menu-content').style.display = 'none';
+        }
+
+        function showAdminLogin() {
+            document.getElementById('admin-login-form').classList.remove('hidden');
+            document.getElementById('menu-content').style.display = 'none';
+        }
+
+        function addUlts() {
+            const playerId = document.getElementById('admin-player-id').value;
+            const amount = parseFloat(document.getElementById('admin-change-amount').value);
+
+            if (playerId && !isNaN(amount)) {
+                let users = JSON.parse(localStorage.getItem('users')) || [];
+                let user = users.find(u => u.firstname + ' ' + u.lastname === playerId);
+                
+                if (user) {
+                    user.balance += amount;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    document.getElementById('admin-message').textContent = 'Ульти успішно додані!';
+                } else {
+                    document.getElementById('admin-message').textContent = 'Гравця не знайдено.';
+                }
+            } else {
+                document.getElementById('admin-message').textContent = 'Будь ласка, заповніть всі поля.';
+            }
+        }
+
+        function subtractUlts() {
+            const playerId = document.getElementById('admin-player-id').value;
+            const amount = parseFloat(document.getElementById('admin-change-amount').value);
+
+            if (playerId && !isNaN(amount)) {
+                let users = JSON.parse(localStorage.getItem('users')) || [];
+                let user = users.find(u => u.firstname + ' ' + u.lastname === playerId);
+                
+                if (user) {
+                    user.balance -= amount;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    document.getElementById('admin-message').textContent = 'Ульти успішно відняті!';
+                } else {
+                    document.getElementById('admin-message').textContent = 'Гравця не знайдено.';
+                }
+            } else {
+                document.getElementById('admin-message').textContent = 'Будь ласка, заповніть всі поля.';
+            }
+        }
+
+        document.getElementById('input-amount').addEventListener('input', function() {
+            const amount = parseFloat(this.value);
+            if (!isNaN(amount)) {
+                const convertedAmount = amount * conversionRate;
+                document.getElementById('result').textContent = 
+                    `${amount} Хазарських ультів = ${convertedAmount.toLocaleString()} РР ультів`;
+            } else {
+                document.getElementById('result').textContent = 
+                    'Курс: 1 Хазарський ульт = 100 мільйонів РР ультів';
+            }
+        });
+    </script>
+</body>
+</html>
